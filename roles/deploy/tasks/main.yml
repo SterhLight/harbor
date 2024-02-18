@@ -1,0 +1,56 @@
+---
+#Возможно потребуется сначало установить модуль
+#ansible-galaxy collection install community.hashi_vault
+#
+#- name: Получение значения harbor_admin_password из Vault
+#  community.hashi_vault.hashi_vault:
+#    url: "{{ vault_address }}"
+#    token: "{{ vault_token }}"
+#    secret: "secret/harbor"
+#    key: "harbor_admin_password"
+#  register: harbor_admin_password_vault
+#
+#- name: Шаблонизация файла harbor.yml и его передача на целевой хост
+#  template:
+#    src: harbor.j2
+#    dest: /tmp/harbor/harbor.yml
+#  vars:
+#    harbor_admin_password: "{{ harbor_admin_password_vault.secret }}"
+
+- name: Templating the harbor.yml file and transferring it to the server
+  template:
+    src: harbor.yml.j2
+    dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}/harbor/harbor.yml"
+
+#- name: Запуск скрипта {{ harbor_folder }}/harbor_{{ harbor_version }}/harbor/install.sh на целевом хосте
+#  ansible.builtin.script:
+#    script: "{{ harbor_folder }}/harbor_{{ harbor_version }}/harbor/install.sh"
+#  register: install_script_output
+
+- name: Get current user
+  ansible.builtin.command:
+    cmd: whoami
+  register: current_user
+
+- debug:
+    var: current_user.stdout
+
+#- name: Run install.sh script
+#  ansible.builtin.command:
+#    cmd: "sh {{ harbor_folder }}/harbor_{{ harbor_version }}/harbor/install.sh"
+#  register: install_script_output
+
+- name: Start Docker service
+  become: true
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Run install.sh script
+  ansible.builtin.shell:
+    cmd: "sh {{ harbor_folder }}/harbor_{{ harbor_version }}/harbor/install.sh"
+  register: install_script_output
+
+#- debug:
+#    var: install_script_output

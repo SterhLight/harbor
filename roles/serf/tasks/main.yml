@@ -1,0 +1,38 @@
+---
+- name: Копирование сертификатов на целевой хост
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+#    dest: /usr/bin
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+  - {src: "{{ certificate }}", dest: "{{ certificate_folder }}", mode: "0644", owner: "{{ owner }}", group: "{{ group }}"}
+  - {src: "{{ private_key }}", dest: "{{ certificate_folder }}", mode: "0600", owner: "{{ owner }}", group: "{{ group }}"}
+
+#- name: Копирование сертификатов на целевой хост
+#  ansible.builtin.copy:
+#    src: ./harbor.crt
+#    dest: "{{ certificate_folder }}"
+##    dest: /usr/bin
+#    owner: '0'
+#    group: '0'
+#    mode: '0644'
+#
+#- name: Копирование сертификатов на целевой хост
+#  ansible.builtin.copy:
+#    src: ./harbor.key
+#    dest: "{{ certificate_folder }}"
+##    dest: /usr/bin
+#    owner: '0'
+#    group: '0'
+#    mode: '0600'
+#
+#- name: Генерация самоподписанного SSL-сертификата
+#  openssl_certificate:
+#    path: "{{ certificate_folder }}/{{ certificate }}"
+#    privatekey_path: "{{ private_key_folder }}/{{ private_key }}"
+#    provider: selfsigned
+#
+

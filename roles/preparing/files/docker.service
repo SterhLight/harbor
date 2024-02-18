@@ -1,0 +1,44 @@
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target docker.socket
+Wants=network-online.target
+
+[Service]
+# по умолчанию не используется systemd для cgroups, поскольку проблемы с 
+# делегированием все еще существуют, и systemd в настоящее время не поддерживает
+# набор функций cgroup, необходимый для контейнеров, запускаемых Docker
+ExecStart=/usr/bin/dockerd
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutStartSec=0
+Restart=always
+
+# Наличие ненулевого значения Limit*s приводит к проблемам
+# с производительностью из-за накладных расходов на учет в ядре.
+# Мы рекомендуем использовать cgroups для локального учета в контейнере.
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+
+# Прокомментируйте TasksMax, если ваша версия systemd его не поддерживает.
+# Эту опцию поддерживают только systemd 226 и выше.
+TasksMax=infinity
+
+# установите делегат да, чтобы systemd не сбрасывал контрольные группы контейнеров докеров
+Delegate=yes
+
+# уничтожьте только процесс докера, а не все процессы в контрольной группе
+KillMode=process
+
+# Обратите внимание, что параметры StartLimit* были перемещены из «Service» в «Unit»
+# в systemd 229. И старое, и новое расположение принимаются systemd 229 и более поздних
+# версий, поэтому используйте старое расположение, чтобы они работали для любой версии systemd.
+StartLimitBurst=3
+
+# Обратите внимание, что StartLimitInterval был переименован в StartLimitIntervalSec в systemd 230.
+# Как старое, так и новое имя принимаются systemd 230 и более поздних версий, поэтому используйте
+# старое имя, чтобы эта опция работала для любой версии systemd.
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target

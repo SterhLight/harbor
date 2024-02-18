@@ -1,0 +1,108 @@
+---
+#- name: Download Docker Engine from binaries
+#  ansible.builtin.get_url:
+#    url: "https://download.docker.com/linux/static/stable/x86_64/docker-{{ docker_version }}.tgz"
+#    dest: "/tmp/docker-{{ docker_version }}.tgz"
+#  async: 1000
+#  poll: 0
+##  register: download_harbor
+#- name: Download Docker-compose from binaries
+#  ansible.builtin.get_url:
+#    url: "https://github.com/docker/compose/releases/download/v{{ compose_version }}/docker-compose-linux-x86_64"
+#    dest: /tmp/docker-compose
+#  async: 1000
+#  poll: 0
+##  register: download_harbor
+#- name: Download Harbor-offline-installer
+#  ansible.builtin.get_url:
+#    url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+#    dest: "/tmp/harbor-offline-installer-v{{ harbor_version }}.tgz"
+#  async: 1000
+#  poll: 0
+##  register: download_harbor
+
+
+- name: Download files in parallel
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+  async: 600
+  poll: 0
+  register: download_results
+  loop:
+    - { url: "{{ URL_docker }}-{{ docker_version }}.tgz", dest: "{{ download_folder }}/docker-{{ docker_version }}.tgz", proc: "docker" }
+    - { url: "{{ URL_compose }}/v{{ compose_version }}/{{ compose_arh }}", dest: "{{ download_folder }}/docker-compose", proc: "compose" }
+    - { url: "{{ URL_harbor }}/v{{ harbor_version }}/{{ harbor_arh }}-v{{ harbor_version }}.tgz", dest: "{{ download_folder }}/{{ harbor_arh }}-v{{ harbor_version }}.tgz", proc: "harbor" }
+
+#- name: Print download results
+#  ansible.builtin.debug:
+#    var: download_results
+
+- name: Wait for downloads to finish
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: download_status
+  until: download_status.finished
+  retries: 60
+  delay: 10
+  with_items: "{{ download_results.results }}"
+
+#- name: Wait for downloads to finish
+#  async_status:
+#    jid: "{{ item.ansible_job_id }}"
+#  register: async_status_result
+#  until: async_status_result.finished
+#  retries: 60
+#  delay: 10
+#  loop: "{{ download_status.results }}"
+#  loop_control:
+#    label: "{{ item.item.url }}"
+
+#- name: Wait for files to download
+#  async_status:
+#    jid: "{{ item.ansible_job_id }}"
+#  register: download_async_status
+#  loop: "{{ download_status.results }}"
+#  until: download_async_status.finished
+#  retries: 60
+#  delay: 10
+#  when: item is changed
+
+#- name: Extract docker-{{ docker_version }}.tgz into /usr/bin
+#  ansible.builtin.unarchive:
+#    src: "/tmp/docker-{{ docker_version }}.tgz"
+#    dest: /tmp
+##    dest: "/usr/bin"
+#    extra_opts: ["--strip-components=1"]
+#    owner: '0'
+#   group: '0'
+#   mode: '0755'
+#  when: "'/tmp/docker-{{ docker_version }}.tgz' in item.item.dest"
+#  loop: "{{ download_status.results }}"
+#  loop_control:
+#    label: "{{ item.item.url }}"
+#
+#- name: Extract harbor-offline-installer-v{{ harbor_version }}.tgz into /opt/harbor_{{ harbor_version }}
+#  ansible.builtin.unarchive:
+#    src: "/tmp/harbor-offline-installer-v{{ harbor_version }}.tgz"
+#    dest: /tmp
+##    dest: "/opt/harbor_{{ harbor_version }}"
+#    owner: '0'
+#    group: '0'
+#  when: "'/tmp/harbor-offline-installer-v{{ harbor_version }}.tgz' in item.item.dest"
+#  loop: "{{ download_status.results }}"
+#  loop_control:
+#    label: "{{ item.item.url }}"
+#
+#- name: Copy docker-compose file with owner and permissions
+#  ansible.builtin.copy:
+#    src: "/tmp/docker-compose"
+#    dest: /tmp
+##    dest: "/usr/bin/docker-compose"
+#    owner: '0'
+#    group: '0'
+#    mode: '0755'
+#  when: "'/tmp/docker-compose' in item.item.dest"
+#  loop: "{{ download_status.results }}"
+#  loop_control:
+#    label: "{{ item.item.url }}"

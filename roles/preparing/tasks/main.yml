@@ -1,0 +1,60 @@
+---
+- name: Ensure group "docker" exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: adding {{ ansible_user }} to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+
+- name: adding {{ ansible_user }} to docker group
+  user:
+    name: root
+    groups: docker
+    append: yes
+
+- name: Extract docker-{{ docker_version }}.tgz into {{ binar_folder }}
+  ansible.builtin.unarchive:
+    src: "{{ download_folder }}/docker-{{ docker_version }}.tgz"
+    dest: "{{ binar_folder }}"
+    extra_opts: [--strip-components=1]
+    owner: '0'
+    group: 'docker'
+    mode: '0755'
+
+- name: Copy docker-compose file with owner and permissions into {{ binar_folder }}
+  ansible.builtin.copy:
+    src: "{{ download_folder }}/docker-compose"
+    dest: "{{ binar_folder }}"
+    owner: '0'
+    group: 'docker'
+    mode: '0755'
+
+- name: Extract {{ harbor_arh }}-v{{ harbor_version }}.tgz into {{ harbor_folder }}/harbor_{{ harbor_version }}
+  ansible.builtin.unarchive:
+    src: "{{ download_folder }}/{{ harbor_arh }}-v{{ harbor_version }}.tgz"
+    dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}"
+#    dest: /opt/harbor_2.10.0
+    owner: '0'
+    group: '0'
+
+- name: Upload  file docker.service
+  ansible.builtin.copy:
+    src: docker.service
+#    dest: /tmp    
+    dest: "/etc/systemd/system/docker.service"
+    owner: '0'
+    group: '0'
+    mode: '0644'
+
+- name: Reload systemd daemon and enable Docker service
+  ansible.builtin.systemd:
+    daemon_reexec: yes
+    name: docker
+    enabled: yes
+
+- name: Reboot the server
+  ansible.builtin.reboot:

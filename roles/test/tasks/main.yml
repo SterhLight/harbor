@@ -1,0 +1,28 @@
+---
+- name: Define files to download
+  set_fact:
+    files_to_download:
+      - url: "https://download.docker.com/linux/static/stable/x86_64/docker-{{ docker_version }}.tgz"
+        dest: "/tmp/docker-{{ docker_version }}.tgz"
+      - url: "https://github.com/docker/compose/releases/download/v{{ compose_version }}/docker-compose-linux-x86_64"
+        dest: "/tmp/docker-compose"
+      - url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+        dest: "/tmp/harbor-offline-installer-v{{ harbor_version }}.tgz"
+
+- name: Download files in parallel
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+  async: 1000
+  poll: 0
+  register: download_results
+  loop: "{{ files_to_download }}"
+
+- name: Wait for downloads to finish
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: download_status
+  until: download_status.finished
+  retries: 100
+  delay: 5
+  loop: "{{ download_results.results }}"
