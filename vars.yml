@@ -1,0 +1,46 @@
+####################### whoami #########################
+ansible_user         : krasava
+
+################### версионность #######################
+harbor_version       : "2.10.0"
+harbor_arh           : harbor-offline-installer
+docker_version       : "24.0.7"
+compose_version      : "2.24.1"
+compose_arh          : docker-compose-linux-x86_64
+
+######### КАК ЭТО ОБОЗВАТЬ? на целевом SRV #############
+binar_folder         : /usr/bin
+#binar_folder         : /tmp
+harbor_folder        : /opt
+
+############# На локальном ПК администратора #############
+download_folder      : /tmp
+
+###################### Источники #########################
+URL_docker           : https://download.docker.com/linux/static/stable/x86_64/docker
+URL_compose          : https://github.com/docker/compose/releases/download
+URL_harbor           : https://github.com/goharbor/harbor/releases/download
+
+###################### Разрешения #########################
+owner                : "0"
+group                : "0"
+
+############## Генерация файла harbor.yml ################
+hostname             : harbor-test45.lab.local
+http_port            : 80
+https_port           : 443
+metric_port          : 9090
+data_volume          : /opt
+#data_volume          : /opt/common
+#data_volume          : /tmp
+
+##################### Сертификаты #######################
+certificate_folder   : /etc/ssl/tensor
+#certificate_folder   : /tmp/tensor
+#certificate          : cert.crt
+certificate          : harbor.crt
+private_key_folder   : /etc/ssl/tensor
+#private_key_folder   : /tmp/tensor
+#private_key          : cert.key
+private_key          : harbor.key
+valid_days           : 3650

@@ -1,0 +1,70 @@
+hostname: {{ hostname }}
+
+http:
+  port: {{ http_port }}
+
+https:
+  port: {{ https_port }}
+  certificate: {{ certificate_folder }}/{{ certificate }}
+  private_key: {{ private_key_folder }}/{{ private_key }}
+
+harbor_admin_password: {{ harbor_admin_password }}
+
+database:
+  password: {{ database_password }}
+  max_idle_conns: 50
+  max_open_conns: 1000
+  conn_max_lifetime: 5m
+  conn_max_idle_time: 0
+
+data_volume: {{ data_volume }}
+
+trivy:
+  ignore_unfixed: false
+  skip_update: false
+  offline_scan: false
+  security_check: vuln
+  insecure: false
+
+jobservice:
+  max_job_workers: 10
+  job_loggers:
+    - STD_OUTPUT
+    - FILE
+    # - DB
+  logger_sweeper_duration: 1 #days
+
+notification:
+  webhook_job_max_retry: 3
+  webhook_job_http_client_timeout: 3 #seconds
+
+log:
+  level: debug
+  local:
+    rotate_count: 50
+    rotate_size: 200M
+    location: /var/log/harbor
+
+_version: {{ harbor_version }}
+
+proxy:
+  http_proxy:
+  https_proxy:
+  no_proxy:
+  components:
+    - core
+    - jobservice
+    - trivy
+
+metric:
+  enabled: true
+  port: {{ metric_port }}
+  path: /metrics
+
+upload_purging:
+  enabled: false
+  # remove files in _upload directories which exist for a period of time, default is one week.
+  age: 168h
+  # the interval of the purge operations
+  interval: 24h
+  dryrun: false
