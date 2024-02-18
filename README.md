@@ -21,7 +21,12 @@ Host harbor-test45.lab.local
   IdentityFile ~/.ssh/myserf
 ```
 Данная запись должна находиться выши часных и общих, которые могут перекрывать собой эту.  
-Проверка:
+Проверка доступности хостов:
 ```bash
 ansible -i hosts.ini -m ping all
+```
+Запуск установки Harbor  
+Потребуется ввести пароль от root и пароль для Ansible-vault
+```bash
+ansible-playbook -i hosts.ini all.yml --ask-vault-pass -K
 ```
