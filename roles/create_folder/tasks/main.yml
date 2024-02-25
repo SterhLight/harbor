@@ -1,11 +1,11 @@
 - name: Create directories if they do not exist
   become: true
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.folder }}"
     state: directory
     mode: '0755'
     owner: '0'
     group: '0'
   loop:
-    - "{{ harbor_folder }}/harbor_{{ harbor_version }}"
-    - "{{ certificate_folder }}"
+    - { folder: "{{ harbor_folder }}/harbor_{{ harbor_version }}" }
+    - { folder: "{{ certificate_folder }}" }
