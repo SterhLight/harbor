@@ -13,17 +13,34 @@
     - { name: "{{ ansible_user }}" }
     - { name: root }
 
+#- name: Extract docker-{{ docker_version }}.tgz into {{ binar_folder }}
+#  ansible.builtin.unarchive:
+#    src: "{{ download_folder }}/docker-{{ docker_version }}.tgz"
+#    dest: "{{ binar_folder }}"
+#    extra_opts: [--strip-components=1]
+#    owner: '0'
+#    group: 'docker'
+#    mode: '0755'
+#
+#- name: Extract {{ harbor_arh }}-v{{ harbor_version }}.tgz into {{ harbor_folder }}/harbor_{{ harbor_version }}
+#  ansible.builtin.unarchive:
+#    src: "{{ download_folder }}/{{ harbor_arh }}-v{{ harbor_version }}.tgz"
+#    dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}"
+##    dest: /opt/harbor_2.10.0
+#    owner: '0'
+#    group: '0'
+
 - name: Extract archives
   ansible.builtin.unarchive:
     src: "{{ download_folder }}/{{ item.src }}"
     dest: "{{ item.dest }}"
-    extra_opts: [--strip-components=1]
+    extra_opts: "{{ item.extra_opts | default([]) }}"
     owner: "{{ item.owner }}"
     group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
+    mode: "{{ '0755' if item.force_mode else item.mode | default(omit) }}"
   loop:
-    - { src: "docker-{{ docker_version }}.tgz", dest: "{{ binar_folder }}", owner: '0', group: 'docker', mode: '0755' }
-    - { src: "{{ harbor_arh }}-v{{ harbor_version }}.tgz", dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}", owner: '0', group: '0' }
+    - { src: "docker-{{ docker_version }}.tgz", dest: "{{ binar_folder }}", owner: '0', group: 'docker', mode: '0755', force_mode: true, extra_opts: ["--strip-components=1"] }
+    - { src: "{{ harbor_arh }}-v{{ harbor_version }}.tgz", dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}", owner: '0', group: '0', extra_opts: [], force_mode: false }
 
 - name: Copy files
   ansible.builtin.copy:
