@@ -4,51 +4,39 @@
     name: docker
     state: present
 
-- name: adding {{ ansible_user }} to docker group
-  user:
-    name: "{{ ansible_user }}"
+- name: Add users to docker group
+  ansible.builtin.user:
+    name: "{{ item.name }}"
     groups: docker
-    append: yes
+    append: true
+  loop:
+    - { name: "{{ ansible_user }}" }
+    - { name: root }
 
-- name: adding {{ ansible_user }} to docker group
-  user:
-    name: root
-    groups: docker
-    append: yes
-
-- name: Extract docker-{{ docker_version }}.tgz into {{ binar_folder }}
+- name: Extract archives
   ansible.builtin.unarchive:
-    src: "{{ download_folder }}/docker-{{ docker_version }}.tgz"
-    dest: "{{ binar_folder }}"
-    extra_opts: [--strip-components=1]
-    owner: '0'
-    group: 'docker'
-    mode: '0755'
+    src: "{{ download_folder }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    extra_opts: "{{ item.extra_opts | default([]) }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ '0755' if item.force_mode else item.mode | default(omit) }}"
+  loop:
+    - { src: "docker-{{ docker_version }}.tgz", dest: "{{ binar_folder }}", owner: '0', group: 'docker', mode: '0755', force_mode: true, extra_opts: ["--strip-components=1"] }
+    - { src: "{{ harbor_arh }}-v{{ harbor_version }}.tgz", dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}", owner: '0', group: '0', force_mode: false, extra_opts: [] }
 
-- name: Copy docker-compose file with owner and permissions into {{ binar_folder }}
+- name: Copy files
   ansible.builtin.copy:
-    src: "{{ download_folder }}/docker-compose"
-    dest: "{{ binar_folder }}"
-    owner: '0'
-    group: 'docker'
-    mode: '0755'
-
-- name: Extract {{ harbor_arh }}-v{{ harbor_version }}.tgz into {{ harbor_folder }}/harbor_{{ harbor_version }}
-  ansible.builtin.unarchive:
-    src: "{{ download_folder }}/{{ harbor_arh }}-v{{ harbor_version }}.tgz"
-    dest: "{{ harbor_folder }}/harbor_{{ harbor_version }}"
-#    dest: /opt/harbor_2.10.0
-    owner: '0'
-    group: '0'
-
-- name: Upload  file docker.service
-  ansible.builtin.copy:
-    src: docker.service
-#    dest: /tmp    
-    dest: "/etc/systemd/system/docker.service"
-    owner: '0'
-    group: '0'
-    mode: '0644'
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { src: "{{ download_folder }}/docker-compose", dest: "{{ binar_folder }}", owner: '0', group: 'docker', mode: '0755' }
+    - { src: "docker.service", dest: "/etc/systemd/system/docker.service", owner: '0', group: '0', mode: '0644' }
+    - {src: "{{ certificate }}", dest: "{{ certificate_folder }}", mode: "0644", owner: "{{ owner }}", group: "{{ group }}"}
+    - {src: "{{ private_key }}", dest: "{{ certificate_folder }}", mode: "0600", owner: "{{ owner }}", group: "{{ group }}"}
 
 - name: Reload systemd daemon and enable Docker service
   ansible.builtin.systemd:
